@@ -25,7 +25,7 @@ midmultigrid = PMultigrid(middiffusion, coarsediffusion, midjacobi, [ctombasis])
 multigrid = PMultigrid(finediffusion, midmultigrid, finejacobi, [mtofbasis])
 
 # compute operator symbols
-A = computesymbols(multigrid, [0.651], [1, 1], [π, π])
+A = computesymbols(multigrid, [0.7], [1, 1], [π, π])
 eigenvalues = real(eigvals(A))
 
 # ------------------------------------------------------------------------------

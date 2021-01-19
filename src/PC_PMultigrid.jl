@@ -480,7 +480,8 @@ function computesymbols(multigrid::PMultigrid, p::Array, v::Array{Int}, θ::Arra
     if isa(multigrid.coarseoperator, Operator)
         A_c_inv = computesymbols(multigrid.coarseoperator, θ)^-1
     elseif isa(multigrid.coarseoperator, PMultigrid)
-        A_c_inv = computesymbols(multigrid.coarseoperator, p, v, θ)
+        A_c = computesymbols(multigrid.coarseoperator.fineoperator, θ)
+        A_c_inv = (I - computesymbols(multigrid.coarseoperator, p, v, θ))*A_c^-1
     else
         Throw(error("coarse operator not supported")) # COV_EXCL_LINE
     end

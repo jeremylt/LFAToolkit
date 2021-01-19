@@ -27,7 +27,7 @@ jacobi = Jacobi(finediffusion)
 multigrid = PMultigrid(finediffusion, coarsediffusion, jacobi, [ctofbasis])
 
 # compute operator symbols
-A = computesymbols(multigrid, [0.636], [1, 1], [π, π])
+A = computesymbols(multigrid, [0.7], [1, 1], [π, π])
 eigenvalues = real(eigvals(A))
 
 # ------------------------------------------------------------------------------

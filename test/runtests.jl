@@ -53,7 +53,7 @@ end
 @testset "  ex4: p-multigrid example           " begin
     include("../examples/ex4_pmultigrid.jl")
 
-    @test max(eigenvalues...) ≈ 0.13249600000000003
+    @test max(eigenvalues...) ≈ 0.09000000000000002
 end
 
 # ------------------------------------------------------------------------------
@@ -63,8 +63,7 @@ end
 @testset "  ex5: p-multigrid multilevel example" begin
     include("../examples/ex5_pmultigrid_multilevel.jl")
 
-    @test min(eigenvalues...) ≈ 0.002256355311027107
-    @test max(eigenvalues...) ≈ 0.7949976390578337
+    @test max(eigenvalues...) ≈ 0.2463055119550956
 end
 
 # ------------------------------------------------------------------------------
