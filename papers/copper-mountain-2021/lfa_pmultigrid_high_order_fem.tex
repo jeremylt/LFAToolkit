@@ -1006,14 +1006,14 @@ The LFA two-grid convergence factor for three dimensional linear elasticity is m
 \section{Conclusions}\label{sec:conclusion}
 % -----------------------------------------------------------------------------
 
-In this paper we developed LFA of p-multigrid with arbitrary second-order PDEs using high-order finite element discretizations by using an operator representation for efficient application of matrix-free implementations.
+We have developed LFA of p-multigrid with arbitrary second-order PDEs using high-order finite element discretizations by using an operator representation for efficient application of matrix-free implementations.
 We introduced LFAToolkit.jl \cite{thompson2021toolkit}, a new Julia package for LFA of high-order finite element methods, and used LFAToolkit.jl to investigate p-multigrid method with Jacobi and Chebyshev semi-iterative method smoothing and aggressive coarsening strategies.
-We observed that the performance of p-multigrid with these two polynomial smoothers degrades as we coarsen more aggressively.
+We observed how the performance of p-multigrid with these two polynomial smoothers degrades as we coarsen more aggressively.
 
-The LFA of p-multigrid framework presented here can be extended to the LFA of h-multigrid methods and reproduces previous work in this area.
-Also, we briefly described how thi work can be extended to LFA of h-multigrid for finite difference discretization stencils that can be represented as finite difference methods.
+The LFA formulation presented here for p-multigrid is shown to also express LFA for h-multigrid using macro-elements, reproducing previous work in this area.
+Also, we briefly described how this formulation can express LFA of h-multigrid for finite difference discretization stencils that can be represented as finite element methods.
 
-The LFA formulation in LFAToolkit.jl accurately predicts the performance of two-grid p-multigrid with polynomial smoothers for the scalar Laplacian in three dimensions and can provide two-grid convergence factors for more complex PDEs, such as linear elasticity in three dimensions.
+The LFA formulation in LFAToolkit.jl accurately predicts the performance of two-grid p-multigrid with polynomial smoothers for the scalar Laplacian in three dimensions, and provides two-grid convergence factors for more complex PDEs, such as linear elasticity in three dimensions.
 
 % -----------------------------------------------------------------------------
 \bibliographystyle{siamplain}
