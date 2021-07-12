@@ -80,7 +80,16 @@ TODO
 \section{Introduction}\label{sec:intro}
 % -----------------------------------------------------------------------------
 
-ToDo
+Balancing Domain Decomposition by Constraints (BDDC) is a relatively new technique created by Dohrmann in 2003 \cite{dohrmann2003preconditioner}.
+BDDC is an improvement upon balancing domain decomposition (BDD) \cite{mandel1993balancing}, which requires modifications to be effective for high-order problems, especially for three-dimensional problems.
+The dual primal version of finite element tearing and interconnecting (FETI-DP) \cite{farhat2000scalable} is closely related to BDDC and the two are effectively the same technique, under certain assumptions \cite{mandel2007bddc}.
+
+Domain decomposition techniques decompose the domain $\Omega$ into a series of subdomains $\Omega^i$.
+Some techniques use overlapping subdomains, such as additive Schwartz methods, which are popular for high-order and spectral finite elements \cite{fischer1997overlapping} and have been used as smoothers in multigrid methods \cite{fischer2005hybrid}.
+In BDDC, we instead use non-overlapping subdomains with an energy minimization problem to resolve jumps in the values of degrees of freedom over subdomain interfaces.
+
+LFA of BDDC was introduced by Brown, He, and MacLachlan \cite{brown2019local}.
+We will discuss implementing BDDC in a matrix-free fashion and re-derive the LFA of BDDC in the context of high-order elements, with single element and macro-element subdomains.
 
 This paper is organized as follows.
 In \cref{sec:notation} we outline the notation for LFA used in this paper.
@@ -140,7 +149,8 @@ For standard coarsening from fine $h=1$ to coarse $h=2$, low frequencies are giv
 \section{Local Fourier Analysis for Balancing Domain Decomposition by Constraints}\label{sec:lfa}
 % -----------------------------------------------------------------------------
 
-We now describe the LFA formulation used in LFAToolkit.jl, first in one dimension and then in multiple dimensions, followed by LFA of BDDC with high-order finite elements.
+We now describe the LFA formulation used in LFAToolkit.jl, first in one dimension and then in multiple dimensions.
+Then we develop LFA of BDDC with high-order finite elements.
 
 % -----------------------------------------------------------------------------
 \subsection{High-Order Finite Elements}\label{sec:highorder}
@@ -167,7 +177,7 @@ In this equation, $f_{i, j}$ may come from a linear PDE or the linearization of 
 Boundary terms have been omitted, as they are not present on the infinite uniform grid $G_h$.
 
 Selecting a finite element basis, we can discretize this weak form and produce
-\begin{equation}\label{pdediscrete}
+\begin{equation}\label{eq:pdediscrete}
 \mathbf{A} \mathbf{u} = \mathbf{b}.
 \end{equation}
 
@@ -177,7 +187,7 @@ Using the algebraic representation of PDE operators given in \cite{brown2010effi
 \end{equation}
 where $\mathbf{G}$ represents the element assembly operator, $\mathbf{B}$ is a basis operator which computes the values and derivatives of the basis functions at the quadrature points, and $\mathbf{D}$ is a block diagonal operator which provides the pointwise application of the bilinear form on the quadrature points, to include quadrature weights and the change in coordinates between the physical and reference space.
 
-Consider the specific case of a block Toeplitz operator representing an arbitrary second order scalar PDE in one dimension with Lagrange basis of polynomial degree $p$ given in the form of \cref{pdediscrete} and \cref{efficienthighorder}.
+Consider the specific case of a block Toeplitz operator representing an arbitrary second order scalar PDE in one dimension with Lagrange basis of polynomial degree $p$ given in the form of \cref{eq:pdediscrete} and \cref{efficienthighorder}.
 The basis $\mathbf{B}$ is defined on the mesh grid with points given by $x_i$, for $i \in \left\lbrace 1, 2, \dots, p + 1 \right\rbrace$ on one element.
 The nodes on the left and right boundaries of the element map to the same Fourier mode when localized to nodes unique to a single finite element, so we can compute the symbol matrix of size $p \times p$ as
 \begin{equation}\label{symbolscalar1d}
@@ -239,7 +249,7 @@ $\mathbf{A}_e$ is the finite element operator for the element and $\mathbf{Q}$ i
 \end{definition}
 
 Note that this LFA notation is applicable to any second-order PDE with a weak form that can be represented by \cref{efficienthighorder}.
-This representation is used in LFAToolkit.jl, where the users provide the finite element basis $\mathbf{B}$, the node to mode mapping $\mathbf{Q}$, and the pointwise representation of the weak form $\mathbf{D}$, and the software can provide the LFA of the PDE with various preconditioners.
+This representation is used in LFAToolkit.jl, where the users provide the finite element basis $\mathbf{B}$, the node to mode localization operator $\mathbf{Q}$, and the pointwise representation of the weak form $\mathbf{D}$, and the software can provide the LFA of the PDE with various preconditioners.
 The nodes may be defined by points $\mathbf x_i$ or more generally, as dual basis functions that may be applied to the Fourier modes; however, we restrict ourselves to nodal bases in this paper.
 
 If the pointwise representation of the weak form $\mathbf{D}$ has a tensor product structure, then the element operator $\mathbf{A}_e$ and therefore the symbol $\tilde{\mathbf{A}}$ will have a tensor product structure, as shown in \cite{he2020two}.
@@ -251,19 +261,298 @@ We omit this optimization in this analysis and LFAToolkit.jl in favor of support
 
 With this representation of the symbol of high-order PDE operators, we can derive the symbol of BDDC preconditioned operators.
 
-ToDo
+For high-order matrix-free BDDC, we decompose the domain $\Omega$ into a series of subdomains $\Omega^e$ given by the individual elements, and we utilize four non-exclusive spaces on each subdomain.
+Figure \ref{fig:bddc_mesh_not_decomposed} shows a global mesh before decomposition, consisting of four quadratic elements in two dimensions, in this example.
+
+The interface between subdomains is given by $\Gamma = \bigcup \partial \Omega^e \backslash \partial \Omega$ and the interface of subdomain $\Omega^e$ is given by $\Gamma^e = \delta \Omega^e \bigcap \Gamma$.
+The interior of each subdomain, $\text{I}$, is given by the remaining degrees of freedom on the element.
+In \cref{fig:bddc_mesh_interface}, the interface degrees of freedom, $\Gamma$, for each subdomain have been highlighted and the interior $\text{I}$ is given by the remainder of each subdomain.
+
+\begin{figure}[!ht]
+  \centering
+  \subfloat[Global Problem Mesh]{\includegraphics[width=0.48\textwidth]{img/HighOrderBDDCMesh}\label{fig:bddc_mesh_not_decomposed}}
+  \hfill
+  \subfloat[Subdomain Interfaces]{\includegraphics[width=0.48\textwidth]{img/HighOrderBDDCMeshInterface}\label{fig:bddc_mesh_interface}}\\
+  \subfloat[BDDC Primal Nodes]{\includegraphics[width=0.48\textwidth]{img/HighOrderBDDCMeshPrimal}\label{fig:bddc_mesh_primal}}
+  \hfill
+  \subfloat[BDDC Duplicated Interface Nodes]{\includegraphics[width=0.48\textwidth]{img/HighOrderBDDCMeshInterfaceBroken}\label{fig:bddc_mesh_broken_interface}}
+  \caption{Non-Overlapping Decomposition of Domain for BDDC}
+\end{figure}
+
+Each subdomain problem could therefore be written as
+\begin{equation}
+\mathbf{A}^e =
+\left[ \begin{array}{c c}
+\mathbf{A}_{\text{I}, \text{I}}^e  &  \mathbf{A}_{\Gamma, \text{I}}^{e, T}  \\
+\mathbf{A}_{\Gamma, \text{I}}^e    &  \mathbf{A}_{\Gamma, \Gamma}^e         \\
+\end{array} \right]
+\end{equation}
+where $\mathbf{A}^e = \mathbf{B}^T \mathbf{D} \mathbf{B}$, as shown in Equation \ref{eq:pdediscrete}.
+
+This subdomain problem can be assembled into the global problem in the typical finite element approach given by \cref{eq:pdediscrete}, but in BDDC we create a partially subassembled problem that is easier to invert than the global problem by duplicating broken degrees of freedom along the subdomain boundaries.
+Only the corner, or vertex, degrees of freedom from each element are assembled into a global coarse problem while the remaining degrees of freedom on the subdomain interfaces are duplicated in each subdomain.
+The solutions on the global coarse problem and broken subdomain problems are used to construct an approximate solution to the true assembled global problem.
+
+The coarse grid, or primal, nodes $\Pi^e$ are given by the corners of the subdomain, so we have $4$ primal nodes for each element in two dimensions and $8$ primal nodes in three dimensions.
+The remainder of the subdomain we denote with an $\text{r}$.
+In \cref{fig:bddc_mesh_primal} the primal nodes have been highlighted.
+
+The partially subassembled problem is therefore given by
+\begin{equation}
+\hat{\mathbf{A}} = \sum_{e = 1}^N \mathbf{R}^{e, T} \hat{\mathbf{A}}^e \mathbf{R}^e
+\label{eq:subassembled}
+\end{equation}
+where
+\begin{equation}
+\hat{\mathbf{A}}^e =
+\left[ \begin{array}{c c}
+\mathbf{A}_{\text{r}, \text{r}}^e  &  \hat{\mathbf{A}}_{\Pi, \text{r}}^{e, T}  \\
+\hat{\mathbf{A}}_{\Pi, \text{r}}^e   &  \hat{\mathbf{A}}_{\Pi, \Pi}^e           \\
+\end{array} \right]
+\end{equation}
+and $\mathbf{R}^e$ is the subdomain injection operator. 
+In this formulation, the broken degrees of freedom found on the portion of subdomain interface given by $\Gamma^e - \Pi^e$ are duplicated for each subdomain.
+In \cref{fig:bddc_mesh_broken_interface} the duplicated degrees of freedom across each subdomain interface have been highlighted.
+This duplication reduces the amount of global communication required to solve the subassemebled problem, which makes BDDC attractive as a preconditioner for high-order finite element methods.
+
+There are BDDC formulations which enrich the primal space with edge or face averages to improve convergence.
+We forgo these formulations to simplify the analysis; however these formulations can become increasingly attractive with large, high-order subdomains in three dimensions.
+There is no fundamental barrier to extending the LFA of BDDC described below for formulations that use edge or face averages to improve convergence.
+
+\begin{definition}\label{def:bddcpreconditioner}
+The action of the BDDC preconditioner is given by
+\begin{equation}
+\mathbf{M}^{-1} = \mathbf{R}^T \hat{\mathbf{A}}^{-1} \mathbf{R}
+\end{equation}
+where $\mathbf{R}$ is the subassembly injection operator.
+The inverse of the partially subassembled problem is computed by Schur complement
+\begin{equation}
+\hat{\mathbf{A}}^{-1} =
+\left[ \begin{array}{c c}
+\mathbf{I}  &  -\mathbf{A}_{\text{r}, \text{r}}^{-1} \hat{\mathbf{A}}_{\Pi, \text{r}}^T  \\
+\mathbf{0}  &  \mathbf{I}                                                                \\
+\end{array} \right]
+\left[ \begin{array}{c c}
+\mathbf{A}_{\text{r}, \text{r}}^{-1}  &  \mathbf{0}                   \\
+\mathbf{0}                            &  \hat{\mathbf{S}}_{\Pi}^{-1}  \\
+\end{array} \right]
+\left[ \begin{array}{c c}
+\mathbf{I}                                                              &  \mathbf{0}  \\
+-\hat{\mathbf{A}}_{\Pi, \text{r}} \mathbf{A}_{\text{r}, \text{r}}^{-1}  &  \mathbf{I}  \\
+\end{array} \right]
+\end{equation}
+where $\hat{\mathbf{S}}_{\Pi} = \hat{\mathbf{A}}_{\Pi, \Pi} - \hat{\mathbf{A}}_{\Pi, \text{r}} \mathbf{A}_{\text{r}, \text{r}}^{-1} \hat{\mathbf{A}}_{\Pi, \text{r}}^T$.
+$\Pi$ denotes degrees of freedom on the assembled subdomain vertex space, while $r$ denotes degrees of freedom on the broken space given by the subdomain interior and duplicated portions of the subdomain interface.
+\end{definition}
 
 % -----------------------------------------------------------------------------
 \subsubsection{Subassembled Symbol}\label{sec:lfasubassembled}
 % -----------------------------------------------------------------------------
 
-ToDo
+The symbol of the partially subassembled problem is delicate to compute because it requires both modes in the broken element space and the global primal variable space.
+We will form the symbol of the three components of the partially subassembled problem, $\mathbf{A}_{r, r}^{-1}$, $\hat{\mathbf{S}}_{\Pi}^{-1}$, and $\hat{\mathbf{A}}_{\Pi, r}$, separately.
+
+The Fourier modes on each broken element subdomain are separate, so the mode localization operator $\mathbf{Q}$ is not used for the symbol of the subdomain solver.
+The subdomain solver is completely in the broken element space and therefore has a very straightforward symbol, given by
+\begin{equation}
+\tilde{\mathbf{A}}_{\text{r}, \text{r}}^{-1} \left( \boldsymbol{\theta} \right) = \mathbf{A}_{\text{r}, \text{r}}^{-1} \odot \left[ e^{\imath \left( \mathbf{x}_j - \mathbf{x}_i \right) \cdot \boldsymbol{\theta} / \mathbf{h}} \right]
+\end{equation}
+where $\mathbf{x}_i$ and $\mathbf{x}_j$ are the coordinates for the nodes in the partially subassembled space.
+
+On the other hand, the Schur complement spans the entire primal space and requires the mode localization operator for the primal space $\mathbf{Q}_{\Pi}$.
+The symbol of the Schur complement is given by
+\begin{equation}
+\tilde{\hat{\mathbf{S}}}_{\Pi}^{-1} \left( \boldsymbol{\theta} \right) = \left( \mathbf{Q}_{\Pi}^T \left( \hat{\mathbf{S}}_{\Pi} \odot \left[ e^{\imath \left( \mathbf{x}_j - \mathbf{x}_i \right) \cdot \boldsymbol{\theta} / \mathbf{h}} \right] \right) \mathbf{Q}_{\Pi} \right)^{-1}
+\end{equation}
+where $\mathbf{x}_i$ and $\mathbf{x}_j$ are the coordinates for the nodes in the primal space.
+The primal vertex solve is global across the entire problem, so the corresponding Fourier modes are mapped to the global problem before being solved exactly.
+
+For the mixed primal and subdomain operators, we use the Fourier mode localization only on the modes corresponding to the primal vertices, giving us
+\begin{equation}
+\tilde{\hat{\mathbf{A}}}_{\text{r}, \Pi} \left( \boldsymbol{\theta} \right) = \left( \hat{\mathbf{A}}_{\text{r}, \Pi} \odot \left[ e^{\imath \left( \mathbf{x}_j - \mathbf{x}_i \right) \cdot \boldsymbol{\theta} / \mathbf{h}} \right] \right) \mathbf{Q}_{\Pi}
+\end{equation}
+where $\mathbf{x}_i$ come from the partially subassembled space and $\mathbf{x}_j$ come from the primal variable space.
+
+\begin{definition}[Symbol of Partially Subassembled Operator Inverse]
+The symbol of the inverse of the partially subassembled problem is given by
+\begin{equation}
+\tilde{\hat{\mathbf{A}}}^{-1} =
+\left[ \begin{array}{c c}
+\mathbf{I}  &  -\tilde{\mathbf{A}}_{\text{r}, \text{r}}^{-1} \tilde{\hat{\mathbf{A}}}_{\Pi, \text{r}}^T  \\
+\mathbf{0}  &  \mathbf{I}                                                                                                                             \\
+\end{array} \right]
+\left[ \begin{array}{c c}
+\tilde{\mathbf{A}}_{\text{r}, \text{r}}^{-1}  &  \mathbf{0}                                        \\
+\mathbf{0}                                                    &  \tilde{\hat{\mathbf{S}}}_{\Pi}^{-1}  \\
+\end{array} \right]
+\left[ \begin{array}{c c}
+\mathbf{I}                                                                                                                           &  \mathbf{0}  \\
+-\tilde{\mathbf{A}}_{\Pi, \text{r}} \tilde{\hat{\mathbf{A}}}_{\text{r}, \text{r}}^{-1}  &  \mathbf{I}  \\
+\end{array} \right]
+\end{equation}
+In this notation, $\tilde{\mathbf{A}}$ indicates Fourier modes on the broken element space, while $\tilde{\hat{\mathbf{A}}}$ indicates Fourier modes on the global primal variable space.
+
+The symbol of the subdomain solver is given by
+\begin{equation}
+\tilde{\mathbf{A}}_{\text{r}, \text{r}}^{-1} \left( \boldsymbol{\theta} \right) = \mathbf{A}_{\text{r}, \text{r}}^{-1} \odot \left[ e^{\imath \left( \mathbf{x}_j - \mathbf{x}_i \right) \cdot \boldsymbol{\theta} / \mathbf{h}} \right]
+\end{equation}
+while the symbol of the Schur complement solve is given by
+\begin{equation}
+\tilde{\hat{\mathbf{S}}}_{\Pi}^{-1} \left( \boldsymbol{\theta} \right) = \left( \mathbf{Q}_{\Pi}^T \left( \hat{\mathbf{S}}_{\Pi} \odot \left[ e^{\imath \left( \mathbf{x}_j - \mathbf{x}_i \right) \cdot \boldsymbol{\theta} / \mathbf{h}} \right] \right) \mathbf{Q}_{\Pi} \right)^{-1}
+\end{equation}
+and the symbol of the mixed primal and subdomain operators are given by
+\begin{equation}
+\tilde{\hat{\mathbf{A}}}_{\text{r}, \Pi} \left( \boldsymbol{\theta} \right) = \left( \hat{\mathbf{A}}_{\text{r}, \Pi} \odot \left[ e^{\imath \left( \mathbf{x}_j - \mathbf{x}_i \right) \cdot \boldsymbol{\theta} / \mathbf{h}} \right] \right) \mathbf{Q}_{\Pi}
+\end{equation}
+and $\tilde{\hat{\mathbf{A}}}_{\text{r}, \Pi}^T \left( \boldsymbol{\theta} \right)$ is given by the conjugate transpose.
+The portion of the mode mapping operator on the primal nodes and modes is denoted $\mathbf{Q}_{\Pi}$.
+The coordinates $\mathbf{x}_i$ and $\mathbf{x}_j$ are given in the partially subassembled space or primal space, as appropriate.
+\label{def:subassembled_symbol}
+\end{definition}
 
 % -----------------------------------------------------------------------------
 \subsubsection{Injection Symbols}\label{sec:lfainjection}
 % -----------------------------------------------------------------------------
 
-ToDo
+The injection operators map the global degrees of freedom to the partially subassembled spaces on each subdomain, and the symbols of the injection operators map the Fourier modes on the global space to the Fourier modes on the partially subassembled space.
+We consider the two injection operators discussed by Brown, He, and MacLachlan in \cite{brown2019local}.
+
+The first injection operator, $\mathbf{R}_1$, the scaled injection operator, results in the lumped BDDC preconditioner, $\mathbf{M}^{-1}_1$.
+
+Let $\mathcal{N} \left( x \right)$ denote the set of subdomains that contain a broken copy of degree of freedom $x$ in the broken space.
+If $x \in \Pi^e$ or $x \in \text{I}^e$, then $\lvert \mathcal{N} \left( x \right) \rvert = 1$, otherwise $\lvert \mathcal{N} \left( x \right) \rvert$ is the number of subdomains that contain $x$.
+The scaled injection operator, $\mathbf{R}_1$ is defined as the mapping between the global degrees of freedom and the broken space where each element is scaled by $1 / \lvert \mathcal{N} \left( x \right) \rvert$.
+For interior and vertex degrees of freedom, the sparse matrix representation of $\mathbf{R}_1$ would contain a single entry with a value of $1$, while each column corresponding to a duplicated degree of freedom has $\lvert \mathcal{N} \left( x \right) \rvert$ entries, each given by $1 / \lvert \mathcal{N} \left( x \right) \rvert$.
+
+\begin{definition}\label{def:scaledinjection}
+Let the scaled injection operator, $\mathbf{R}_1$, be given by the mapping from the global problem space to the broken space where each degree of freedom is scaled by its multiplicity in the broken space, denoted by $\lvert \mathcal{N} \left( x \right) \rvert$.
+\end{definition}
+
+An operator preconditioned with the lumped BDDC preconditioner has the same eigenvalues as the lumped FETI-DP preconditioned operator, with the exception of some eigenvalues that are equal to $0$ and $1$ \cite{li2007use}.
+
+The scaled injection operator, $\mathbf{R}_1$, is a pointwise scaling operator, so the operator is its own symbol.
+We can partition $\mathbf{R}_1$ into its action on primal and subassembled nodes on each element,
+\begin{equation}
+\mathbf{R}_1^e =
+\begin{bmatrix}
+\mathbf{R}_{1, \Pi} &                    \\
+                    & \mathbf{R}_{1, r}  \\
+\end{bmatrix}.
+\end{equation}
+
+In the symbol of the subassembled inverse, the Fourier modes on the primal nodes have already been localized to Fourier modes in the global space, so we only need the Fourier mode localization operator on the subassembled nodes, denoted $\mathbf{Q}_r$.
+
+\begin{definition}[Symbol of Scaled Injection Operator]
+The symbol of the scaled injection operator is given by
+\begin{equation}
+\tilde{\mathbf{R}}_1 \left( \boldsymbol{\theta} \right) =
+\begin{bmatrix}
+\mathbf{I} &                    \\
+           & \mathbf{R}_{1, r}  \\
+\end{bmatrix}
+\begin{bmatrix}
+\mathbf{I} &                 \\
+           & \mathbf{Q}_{r}  \\
+\end{bmatrix}
+\end{equation}
+where $\mathbf{R}_{1, r}$ gives the portion of the scaled injection operator acting on the subassembled nodes and $\mathbf{Q}_r$ gives the portion of the Fourier mode localization operator that localizes the Fourier modes on the subassembled nodes.
+\label{def:scaled_injection_symbol}
+\end{definition}
+
+The second injection operator, $\mathbf{R}_2$, the harmonic injection operator, results in the Dirichlet BDDC preconditioner, $\mathbf{M}^{-1}_2$.
+
+This injection operator uses a discrete harmonic extension of the interface values to minimize the energy norm of the result, which leads to a better stability bound, as shown by Toselli and Widlund \cite{toselli2006domain}.
+Let $\boldsymbol{\mathcal{H}}$ be given by a direct sum of local operators $\boldsymbol{\mathcal{H}}^e = - \mathbf{A}_{\text{I}, \text{I}}^{e, -1} \mathbf{A}_{\Gamma, \text{I}}^{e, T}$.
+This operator solves a local Dirichlet problem given by mapping the jump over subdomain interfaces for duplicated values to the subdomain interior.
+The jump mapping is given by
+\begin{equation}
+\mathbf{J}^{e, T} v \left( x \right) = \sum_{i \in \mathcal{N} \left( x \right)} \left( \frac{v^e \left( x \right)}{\lvert \mathcal{N} \left( x \right) \rvert} - \frac{v^i \left( x \right)}{\lvert \mathcal{N} \left( x \right) \rvert} \right), \forall x \in \Gamma^e.
+\end{equation}
+
+\begin{definition}[Harmonic Injection Operator]
+Let the harmonic injection operator be given by $\mathbf{R}_2 = \mathbf{R}_1 - \mathbf{J}^T \boldsymbol{\mathcal{H}}^T$, where $\boldsymbol{\mathcal{H}}$ is given by a direct sum of local operators $\boldsymbol{\mathcal{H}}^e = - \mathbf{A}_{\text{I}, \text{I}}^{e, -1} \mathbf{A}_{\Gamma, \text{I}}^{e, T}$ and
+\begin{equation}
+\mathbf{J}^{e, T} v \left( x \right) = \sum_{i \in \mathcal{N} \left( x \right)} \left( \frac{v^e \left( x \right)}{\lvert \mathcal{N} \left( x \right) \rvert} - \frac{v^i \left( x \right)}{\lvert \mathcal{N} \left( x \right) \rvert} \right), \forall x \in \Gamma^e.
+\end{equation}
+\label{def:harmonicinjection}
+\end{definition}
+
+An operator preconditioned with the Dirichlet BDDC preconditioner, $\mathbf{M}^{-1}_2 \mathbf{A}$, has the same eigenvalues as the BDDC preconditioned operator with original formulation of the BDDC preconditioner given by Dohrmann \cite{dohrmann2003preconditioner}, with the exception of some eigenvalues that are equal to $1$ \cite{li2007use}.
+
+For the symbol of the harmonic injection operator, we need the symbol of the harmonic extension and jump mapping.
+
+As with the partially subassembled problem, the symbol of the harmonic extension is given by the symbols of the local operators,
+\begin{equation}
+\tilde{\boldsymbol{\mathcal{H}}} = - \tilde{\mathbf{A}}_{I, I}^{-1} \tilde{\mathbf{A}}_{\Gamma, I}^T
+\end{equation}
+where
+\begin{equation}
+\tilde{\mathbf{A}}_{I, I}^{-1} \left( \boldsymbol{\theta} \right) = \mathbf{A}_{I, I}^{e, -1} \odot \left[ e^{\imath \left( \mathbf{x}_j - \mathbf{x}_i \right) \cdot \boldsymbol{\theta} / \mathbf{h}} \right],
+\hspace{5mm}
+\tilde{\mathbf{A}}_{\Gamma, I}^T \left( \boldsymbol{\theta} \right) = \mathbf{A}_{\Gamma, I}^{e, T} \odot \left[ e^{\imath \left( \mathbf{x}_j - \mathbf{x}_i \right) \cdot \boldsymbol{\theta} / \mathbf{h}} \right]
+\end{equation}
+
+The jump mapping is a pointwise scaling operator, so it is its own symbol, just as $\mathbf{R}_1$ is its own symbol.
+The symbol $\tilde{\mathbf{J}}$ is a operator with entries on the diagonal given by
+\begin{equation}
+\tilde{\mathbf{J}}_{i, i} = - \frac{\lvert \mathcal{N} \left( x_i \right) \rvert - 1}{\lvert \mathcal{N} \left( x_i \right) \rvert}
+\end{equation}
+and off diagonal entries given by
+\begin{equation}
+\tilde{\mathbf{J}}_{i, j} = - \frac{1}{\lvert \mathcal{N} \left( x_i \right) \rvert} \hspace{2mm} \text{if} \hspace{2mm} x_j \in \mathcal{N} \left( x_i \right).
+\end{equation}
+
+\begin{definition}[Symbol of Harmonic Injection Operator]
+The symbol of the harmonic injection operator is given by
+\begin{equation}
+\tilde{\mathbf{R}}_2 \left( \boldsymbol{\theta} \right) =
+\begin{bmatrix}
+\mathbf{I} &                                                                  \\
+           & \mathbf{R}_{1, r} - \mathbf{J}^T_r \boldsymbol{\mathcal{H}}^T_r  \\
+\end{bmatrix}
+\begin{bmatrix}
+\mathbf{I} &                 \\
+           & \mathbf{Q}_{r}  \\
+\end{bmatrix}
+\end{equation}
+where $\mathbf{R}_{1, r}$ gives the portion of the scaled injection operator acting on the subassembled nodes, $\mathbf{J}^T_r$ gives the portion of the jump mapping acting on the subassembled nodes, $\boldsymbol{\mathcal{H}}^T_r$ gives the portion of the harmonic extension acting on subassembled nodes, and $\mathbf{Q}_r$ gives the portion of the Fourier mode localization operator that localizes the Fourier modes on the subassembled nodes.
+
+The symbol of the harmonic extension is given by the symbols of the local operators,
+\begin{equation}
+\tilde{\boldsymbol{\mathcal{H}}} = - \tilde{\mathbf{A}}_{I, I}^{-1} \tilde{\mathbf{A}}_{\Gamma, I}^T
+\end{equation}
+where
+\begin{equation}
+\tilde{\mathbf{A}}_{I, I}^{-1} \left( \boldsymbol{\theta} \right) = \mathbf{A}_{I, I}^{e, -1} \odot \left[ e^{\imath \left( \mathbf{x}_j - \mathbf{x}_i \right) \cdot \boldsymbol{\theta} / \mathbf{h}} \right],
+\hspace{5mm}
+\tilde{\mathbf{A}}_{\Gamma, I}^T \left( \boldsymbol{\theta} \right) = \mathbf{A}_{\Gamma, I}^{e, T} \odot \left[ e^{\imath \left( \mathbf{x}_j - \mathbf{x}_i \right) \cdot \boldsymbol{\theta} / \mathbf{h}} \right].
+\end{equation}
+The coordinates $\mathbf{x}_i$ and $\mathbf{x}_j$ are given in the subdomain interior or on subdomain interface, as appropriate.
+
+The symbol of the jump mapping, $\tilde{\mathbf{J}}$, is a operator with entries on the diagonal given by
+\begin{equation}
+\tilde{\mathbf{J}}_{i, i} = - \frac{\lvert \mathcal{N} \left( x_i \right) \rvert - 1}{\lvert \mathcal{N} \left( x_i \right) \rvert}
+\end{equation}
+and off diagonal entries given by
+\begin{equation}
+\tilde{\mathbf{J}}_{i, j} = - \frac{1}{\lvert \mathcal{N} \left( x_i \right) \rvert} \hspace{2mm} \text{if} \hspace{2mm} x_j \in \mathcal{N} \left( x_i \right).
+\end{equation}
+\label{def:harmonic_injection_symbol}
+\end{definition}
+
+% -----------------------------------------------------------------------------
+\subsubsection{BDDC Symbol}\label{sec:lfabddcsymbol}
+% -----------------------------------------------------------------------------
+
+The symbol of the lumped and Dirichled variants of BDDC are given by the symbol of the subassembled inverse and the respective injection operators.
+
+\begin{definition}\label{def:lumped_bddc_symbol}
+The symbol of the BDDC preconditioner is given by
+\begin{equation}
+\tilde{\mathbf{M}}^{-1}_i = \tilde{\mathbf{R}}^T_i \tilde{\hat{\mathbf{A}}}^{-1} \tilde{\mathbf{R}}_i
+\end{equation}
+where $\tilde{\mathbf{R}}_i$ is the symbol of the injection operator, given by \cref{def:scaled_injection_symbol,def:harmonic_injection_symbol}, and $\tilde{\hat{\mathbf{A}}}^{-1}$ is the symbol of the inverse of the subassembled problem, given by \cref{def:subassembled_symbol}.
+\end{definition}
 
 % -----------------------------------------------------------------------------
 \subsection{Extension to Macro-Elements}\label{sec:previouswork}
@@ -303,7 +592,7 @@ This previous work provided very sharp LFA convergence estimates when compared t
 \label{table:macro_element_bddc}
 \end{table}
 
-\cref{table:macro_element_bddc} shows the maximal eigenvalues and condition numbers for the symbol of the BDDC preconditioned operator $\tilde{\mathbf{M}}^{-1}_i \left( \boldsymbol{\theta} \right) \tilde{{\color{burgundy}\mathbf{A}}} \left( \boldsymbol{\theta} \right)$ for the two dimensional Poisson problem on linear macro-element subdomains with varying numbers of elements in one dimension.
+\cref{table:macro_element_bddc} shows the maximal eigenvalues and condition numbers for the symbol of the BDDC preconditioned operator $\tilde{\mathbf{M}}^{-1}_i \left( \boldsymbol{\theta} \right) \tilde{\mathbf{A}} \left( \boldsymbol{\theta} \right)$ for the two dimensional Poisson problem on linear macro-element subdomains with varying numbers of elements in one dimension.
 The maximal eigenvalues were computed across $64$ uniformly spaced frequencies.
 These values exactly agree with the previous work by Brown, He, and MacLachlan \cite{brown2019local}.
 
@@ -337,7 +626,7 @@ This approach has been investigated for solid mechanics problems, such as in \ci
 \label{table:high_order_element_bddc}
 \end{table}
 
-\cref{table:high_order_element_bddc} shows the maximal eigenvalues and condition numbers for the symbol of the BDDC preconditioned operator $\tilde{\mathbf{M}}^{-1}_i \left( \boldsymbol{\theta} \right) \tilde{{\color{burgundy}\mathbf{A}}} \left( \boldsymbol{\theta} \right)$ for the two dimensional Poisson problem on single high-order element subdomains with varying polynomial orders.
+\cref{table:high_order_element_bddc} shows the maximal eigenvalues and condition numbers for the symbol of the BDDC preconditioned operator $\tilde{\mathbf{M}}^{-1}_i \left( \boldsymbol{\theta} \right) \tilde{\mathbf{A}} \left( \boldsymbol{\theta} \right)$ for the two dimensional Poisson problem on single high-order element subdomains with varying polynomial orders.
 
 The improved condition number, and therefore convergence, of the Dirichlet BDDC compared to the lumped BDDC is more significant for high-order elements.
 With single high-order element subdomains, the Fast Diagonalization Method approximate inverse subdomain solver can be used for both the subdomain subassembled inverse and subdomain interior inverse, which eliminates the advantage in reduced setup costs for lumped BDDC.
@@ -429,7 +718,7 @@ ToDo
 In this paper we developed LFA of BDDC with arbitrary second-order PDEs using high-order finite element discretizations by using an operator representation for efficient application of matrix-free implementations.
 We used LFAToolkit.jl to investigate BDDC on high-order elements and validate against previous work.
 
-The LFA of p-multigrid framework presented here can be extended to the LFA of BDDC on low-order finite elements and reproduces previous work in this area.
+The LFA of BDDC framework presented here can be extended to the LFA of BDDC on low-order finite elements and reproduces previous work in this area and agrees with condition numbers from previous work on LFA of BDDC for high-order finite elements.
 
 % -----------------------------------------------------------------------------
 \bibliographystyle{siamplain}
