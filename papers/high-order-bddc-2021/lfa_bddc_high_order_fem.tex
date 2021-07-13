@@ -65,7 +65,13 @@
 
 % -----------------------------------------------------------------------------
 \begin{abstract}
-TODO
+Domain decomposition methods are popular preconditioners for solving linear systems derived from discretizing PDEs.
+Balancing Domain Decomposition by Constraints (BDDC) is a non-overlapping domain decomposition technique that is closely related to the dual primal version of finite element tearing and interconnecting.
+Local Fourier Analysis (LFA) is a technique for investigating and tuning preconditioners for finite difference and finite element methods.
+In this paper, we use LFAToolkit.jl, a Julia package for LFA of high-order finite element methods, to analyze BDDC for high-order finite elements.
+Specifically, we develop LFA of BDDC with arbitrary second-order PDEs using high-order finite element discretizations and examine the performance of BDDC on subdomains consisting of single and multiple high-order finite elements.
+We can replicate previous work on the LFA of BDDC on subdomains with multiple low-order elements.
+Examples are presented in two and three dimensions to validate our LFA of BDDC for the Laplacian and linear elasticity.
 \end{abstract}
 % -----------------------------------------------------------------------------
 
