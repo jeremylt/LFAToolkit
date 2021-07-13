@@ -74,6 +74,18 @@
   publisher = {Elsevier}
 }
 
+@article{kronbichler2019multigrid,
+  title={Multigrid for matrix-free high-order finite element computations on graphics processors},
+  author={Kronbichler, Martin and Ljungkvist, Karl},
+  journal={ACM Transactions on Parallel Computing (TOPC)},
+  volume={6},
+  number={1},
+  pages={1--32},
+  year={2019},
+  publisher={ACM New York, NY, USA},
+  doi={10.1145/3322813}
+}
+
 % -----------------------------------------------------------------------------
 % CEED
 % -----------------------------------------------------------------------------
@@ -100,31 +112,6 @@
   volume = 34,
   year = {2020},
   month = {6}
-}
-
-@misc{libceed-user-manual,
-  title = {lib{C}{E}{E}{D} {U}ser {M}anual},
-  author = {
-    Abdelfattah, Ahmad and
-    Barra, Valeria and
-    Beams, Natalie and
-    Brown, Jed and
-    Camier, Jean-Sylvain and
-    Dobrev, Veselin and
-    Dudouit, Yohann and
-    Ghaffari, Leila and
-    Kolev, Tzanio and
-    Medina, David and
-    Rathnayake, Thilina and
-    Thompson, Jeremy L and
-    Tomov, Stanimire
-  },
-  month = mar,
-  year = 2021,
-  publisher = {Zenodo},
-  version = {0.8},
-  doi = {10.5281/zenodo.4895340},
-  url = {https://doi.org/10.5281/zenodo.4895340}
 }
 
 % -----------------------------------------------------------------------------
@@ -195,6 +182,155 @@
   number = {4},
   pages = {389--406},
   year = {1987},
+  publisher = {Springer}
+}
+
+% -----------------------------------------------------------------------------
+% BDDC
+% -----------------------------------------------------------------------------
+
+@article{pavarino2010bddc,
+  title = {{BDDC} preconditioners for spectral element discretizations of almost incompressible elasticity in three dimensions},
+  author = {
+    Pavarino, Luca F and
+    Widlund, Olof B and
+    Zampini, Stefano
+  },
+  journal = {SIAM Journal on Scientific Computing},
+  volume = {32},
+  number = {6},
+  pages = {3604--3626},
+  year = {2010},
+  publisher = {SIAM}
+}
+
+@article{klawonn2008spectral,
+  title = {Spectral element FETI-DP and BDDC preconditioners with multi-element subdomains},
+  author = {
+    Axel Klawonn and
+    Luca F. Pavarino and
+    Oliver Rheinbach
+  },
+  journal = {Computer Methods in Applied Mechanics and Engineering},
+  volume = {198},
+  number = {3},
+  pages = {511-523},
+  year = {2008},
+  issn = {0045-7825},
+  doi = {https://doi.org/10.1016/j.cma.2008.08.017},
+  url = {https://www.sciencedirect.com/science/article/pii/S0045782508003137},
+}
+
+@article{li2007use,
+  title = "On the use of inexact subdomain solvers for {BDDC} algorithms",
+  author = {
+    Li, Jing and
+    Widlund, Olof B
+  },
+  journal = {Computer Methods in Applied Mechanics and Engineering},
+  volume = {196},
+  number = {8},
+  pages = {1415--1428},
+  year = {2007},
+  publisher = {Elsevier}
+}
+
+@book{toselli2006domain,
+  title = "{D}omain {D}ecomposition {M}ethods: {A}lgorithms and {T}heory",
+  author = {
+    Toselli, Andrea and
+    Widlund, Olof
+  },
+  volume = {34},
+  year = {2006},
+  publisher = {Springer Science \& Business Media},
+}
+
+@article{dohrmann2003preconditioner,
+  title = {A preconditioner for substructuring based on constrained energy minimization},
+  author = {Dohrmann, Clark R},
+  journal = {SIAM Journal on Scientific Computing},
+  volume = {25},
+  number = {1},
+  pages = {246--258},
+  year = {2003},
+  publisher = {SIAM}
+}
+
+@article{mandel1993balancing,
+  title = {Balancing domain decomposition},
+  author = {Mandel, Jan},
+  journal = {Communications in numerical methods in engineering},
+  volume = {9},
+  number = {3},
+  pages = {233--241},
+  year = {1993},
+  publisher = {Wiley Online Library}
+}
+
+@article{farhat2000scalable,
+  title = {A scalable dual-primal domain decomposition method},
+  author = {
+    Farhat, Charbel and
+    Lesoinne, Michael and
+    Pierson, Kendall
+  },
+  journal = {Numerical linear algebra with applications},
+  volume = {7},
+  number = {7-8},
+  pages = {687--714},
+  year = {2000},
+  publisher =   {Wiley Online Library}
+}
+
+@article{mandel2007bddc,
+  title = {{BDDC} and {FETI-DP} under minimalist assumptions},
+  author = {Mandel, Jan and Soused{\'\i}k, Bed{\v{r}}ich},
+  journal = {Computing},
+  volume = {81},
+  number = {4},
+  pages = {269--280},
+  year = {2007},
+  publisher = {Springer}
+}
+
+% -----------------------------------------------------------------------------
+% Schwarz
+% -----------------------------------------------------------------------------
+
+@article{fischer1997overlapping,
+  title = "An overlapping {S}chwarz method for spectral element solution of the incompressible {Navier-Stokes} equations",
+  author = {Fischer, Paul F},
+  journal = {Journal of Computational Physics},
+  volume = {133},
+  number = {1},
+  pages = {84--101},
+  year = {1997},
+  publisher = {New York, Academic Press.}
+}
+
+@incollection{fischer2000overlapping,
+  title = "An overlapping {Schwarz} method for spectral element simulation of three-dimensional incompressible flows",
+  author = {
+    Fischer, Paul F and
+    Tufo, Henry M and
+    Miller, NI
+  },
+  booktitle = {Parallel Solution of Partial Differential Equations},
+  pages = {159--180},
+  year = {2000},
+  publisher = {Springer}
+}
+
+@incollection{fischer2005hybrid,
+  title = "Hybrid {Schwarz}-multigrid methods for the spectral element method: Extensions to {Navier-Stokes}",
+  author = {
+    Fischer, Paul F and
+    Lottes, James W
+  },
+  booktitle = {Domain Decomposition Methods in Science and Engineering},
+  pages = {35--49},
+  year = {2005},
   publisher = {Springer}
 }
 
@@ -336,12 +472,26 @@
   mrnumber = {1807961},
   mrreviewer = {Dietrich Braess},
 }
+
 @phdthesis{rittich2018extending,
-  title={Extending and automating {F}ourier analysis for multigrid methods},
-  author={Rittich, Hannah},
-  year={2018},
-  school={Universit{\"a}t Wuppertal, Fakult{\"a}t f{\"u}r Mathematik und Naturwissenschaften}
+  title = {Extending and automating {F}ourier analysis for multigrid methods},
+  author = {Rittich, Hannah},
+  year = {2018},
+  school = {Universit{\"a}t Wuppertal, Fakult{\"a}t f{\"u}r Mathematik und Naturwissenschaften}
 }
+
+@article{maclachlan2011overlapping,
+  author = {MacLachlan, Scott P. and Oosterlee, C. W.},
+  title = {Local {Fourier} analysis for multigrid with overlapping smoothers applied to systems of {PDEs}},
+  journal = {Numerical Linear Algebra with Applications},
+  volume = {18},
+  number = {4},
+  pages = {751-774},
+  keywords = {multigrid, finite-element discretizations, local Fourier analysis},
+  doi = {10.1002/nla.762},
+  year = {2011}
+}
+
 % -----------------------------------------------------------------------------
 % Smoothers
 % -----------------------------------------------------------------------------
@@ -441,6 +591,59 @@
   url    = {https://www.mcs.anl.gov/petsc}
 }
 
+@misc{libceed-user-manual,
+  title = {lib{C}{E}{E}{D} {U}ser {M}anual},
+  author = {
+    Abdelfattah, Ahmad and
+    Barra, Valeria and
+    Beams, Natalie and
+    Brown, Jed and
+    Camier, Jean-Sylvain and
+    Dobrev, Veselin and
+    Dudouit, Yohann and
+    Ghaffari, Leila and
+    Kolev, Tzanio and
+    Medina, David and
+    Rathnayake, Thilina and
+    Thompson, Jeremy L and
+    Tomov, Stanimire
+  },
+  month = mar,
+  year = 2021,
+  publisher = {Zenodo},
+  version = {0.8},
+  doi = {10.5281/zenodo.4895340},
+  url = {https://doi.org/10.5281/zenodo.4895340}
+}
+
+@article{libceed,
+  title = {libCEED: Fast algebra for high-order element-based discretizations},
+  doi = {10.21105/joss.02945},
+  url = {https://doi.org/10.21105/joss.02945},
+  year = {2021},
+  publisher = {The Open Journal},
+  volume = {6},
+  number = {63},
+  pages = {2945},
+  author = {
+    Jed Brown and
+    Ahmad Abdelfattah and
+    Valeria Barra and
+    Natalie Beams and
+    Jean-Sylvain Camier and
+    Veselin Dobrev and
+    Yohann Dudouit and
+    Leila Ghaffari and
+    Tzanio Kolev and
+    David Medina and
+    Will Pazner and
+    Thilina Ratnayaka and
+    Jeremy Thompson and
+    Stan Tomov
+  },
+  journal = {Journal of Open Source Software}
+}
+
 % -----------------------------------------------------------------------------
 % Elasticity
 % -----------------------------------------------------------------------------
@@ -454,32 +657,13 @@
 }
 
 % -----------------------------------------------------------------------------
+% Fluids
+% -----------------------------------------------------------------------------
+
 @book{deville2002highorder,
   title={High-order methods for incompressible fluid flow},
   author={Deville, Michel O and Fischer, Paul F and Mund, Ernest H},
   year={2002},
   publisher={Cambridge University Press},
   isbn={0-521-45309-7}
-}
-@article{kronbichler2019multigrid,
-  title={Multigrid for matrix-free high-order finite element computations on graphics processors},
-  author={Kronbichler, Martin and Ljungkvist, Karl},
-  journal={ACM Transactions on Parallel Computing (TOPC)},
-  volume={6},
-  number={1},
-  pages={1--32},
-  year={2019},
-  publisher={ACM New York, NY, USA},
-  doi={10.1145/3322813}
-}
-@article{maclachlan2011overlapping,
-  author = {MacLachlan, Scott P. and Oosterlee, C. W.},
-  title = {Local {Fourier} analysis for multigrid with overlapping smoothers applied to systems of {PDEs}},
-  journal = {Numerical Linear Algebra with Applications},
-  volume = {18},
-  number = {4},
-  pages = {751-774},
-  keywords = {multigrid, finite-element discretizations, local Fourier analysis},
-  doi = {10.1002/nla.762},
-  year = {2011}
 }
